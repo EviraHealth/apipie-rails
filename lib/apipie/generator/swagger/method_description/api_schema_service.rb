@@ -24,16 +24,64 @@ class Apipie::Generator::Swagger::MethodDescription::ApiSchemaService
       paths[path.swagger_path(@method_description)][api.normalized_http_method] = {
         tags: tags,
         consumes: consumes,
+        produces: ["application/json"], # Evira: Forces application/json content type for all documentation
         operationId: op_id,
         summary: api.summary(method_description: @method_description, language: @language),
         parameters: parameters,
         responses: responses(api),
-        description: Apipie.app.translate(@method_description.full_description, @language)
+        description: Apipie.app.translate(@method_description.full_description, @language),
+        "x-codeSamples": build_code_samples(api), # Evira:
       }.compact
     end
   end
 
   private
+
+  # Evira: Automatically generates cURL examples from endpoint headers and body params
+  def build_code_samples(api)
+    return [] unless %w[get post put patch delete].include?(api.http_method.downcase)
+
+    host = Apipie.configuration.swagger_host || "http://localhost:3000"
+    url = "#{host}#{api.path}"
+
+    http_method = api.http_method.upcase
+
+    headers = []
+
+    if @method_description.headers.present?
+      @method_description.headers.each do |header|
+        headers << "-H \"#{header[:name]}: #{header[:options][:default] || "<value>"}\""
+      end
+    else
+      headers << "-H \"Content-Type: application/json\""
+    end
+
+    body_params = @method_description.params.values.each_with_object({}) do |param, hash|
+      next if param.response_only || param.options[:in] == "query"
+
+      name = param.name.to_s
+      example = param.options[:example] || "#{name}_example"
+
+      hash[name] = example
+    end
+
+    body_part = body_params.empty? ? "" : "-d '#{JSON.pretty_generate(body_params)}'"
+
+    # Join cURL parts
+    curl_parts = [
+      "curl -X #{http_method} \"#{full_path}\"",
+      *headers,
+      body_part,
+    ].reject(&:empty?).join(" \\\n  ")
+
+    [
+      {
+        lang: "cURL",
+        label: "cURL",
+        source: curl_parts,
+      },
+    ]
+  end
 
   def summary(api)
     translated_description = Apipie.app.translate(api.short_description, @language)
@@ -48,17 +96,17 @@ class Apipie::Generator::Swagger::MethodDescription::ApiSchemaService
 
   def tags
     tags = if Apipie.configuration.generator.swagger.skip_default_tags?
-             []
-           else
-             [@method_description.resource._id]
-           end
+        []
+      else
+        [@method_description.resource._id]
+      end
     tags + warning_tags + @method_description.tag_list.tags
   end
 
   def warning_tags
     if Apipie.configuration.generator.swagger.include_warning_tags? &&
        Apipie::Generator::Swagger::WarningWriter.instance.issued_warnings?
-      ['warnings issued']
+      ["warnings issued"]
     else
       []
     end
@@ -66,9 +114,9 @@ class Apipie::Generator::Swagger::MethodDescription::ApiSchemaService
 
   def consumes
     if params_in_body?
-      ['application/json']
+      ["application/json"]
     else
-      ['application/x-www-form-urlencoded', 'multipart/form-data']
+      ["application/x-www-form-urlencoded", "multipart/form-data"]
     end
   end
 
@@ -82,7 +130,7 @@ class Apipie::Generator::Swagger::MethodDescription::ApiSchemaService
       .new(
         @method_description,
         language: @language,
-        http_method: api.normalized_http_method
+        http_method: api.normalized_http_method,
       )
       .call
   end

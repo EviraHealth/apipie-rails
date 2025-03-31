@@ -9,7 +9,7 @@ module Apipie
       :validate, :validate_value, :validate_presence, :validate_key, :action_on_non_validated_keys, :authenticate, :doc_path,
       :show_all_examples, :process_params, :update_checksum, :checksum_path,
       :link_extension, :record, :languages, :translate, :locale, :default_locale,
-      :persist_show_in_doc, :authorize, :ignore_allow_blank_false
+      :persist_show_in_doc, :authorize, :ignore_allow_blank_false, :swagger_host # Evira: Allows defining host url in the API directory apipie config
 
     def_delegators :swagger, *Apipie::Generator::Swagger::Config.deprecated_methods
 
@@ -35,7 +35,7 @@ module Apipie
     attr_reader :api_action_matcher
 
     def api_action_matcher=(callable)
-      raise 'Must implement .call method' unless callable.respond_to?(:call)
+      raise "Must implement .call method" unless callable.respond_to?(:call)
 
       @api_action_matcher = callable
     end
@@ -65,21 +65,25 @@ module Apipie
     def validate_value
       validate? && @validate_value
     end
+
     alias validate_value? validate_value
 
     def validate_presence
       validate? && @validate_presence
     end
+
     alias validate_presence? validate_presence
 
     def validate_key
       validate? && @validate_key
     end
+
     alias validate_key? validate_key
 
     def process_value?
       @process_params
     end
+
     # set to true if you want to use pregenerated documentation cache and avoid
     # generating the documentation on runtime (useful for production
     # environment).
@@ -90,6 +94,7 @@ module Apipie
     alias use_cache? use_cache
 
     attr_writer :cache_dir
+
     def cache_dir
       @cache_dir ||= File.join(Rails.root, "public", "apipie-cache")
     end
@@ -99,6 +104,7 @@ module Apipie
     # allocation. It you need the DSL for other reasons, you can force the
     # activation.
     attr_writer :force_dsl
+
     def force_dsl?
       @force_dsl
     end
@@ -107,6 +113,7 @@ module Apipie
     # to be ignored # when extracting description form calls.
     # e.g. %w[Api::CommentsController Api::PostsController#post]
     attr_writer :ignored_by_recorder
+
     def ignored_by_recorder
       @ignored_by_recorder ||= []
       @ignored_by_recorder.map(&:to_s)
@@ -116,6 +123,7 @@ module Apipie
     # to be ignored # when generating the documentation
     # e.g. %w[Api::CommentsController Api::PostsController#post]
     attr_writer :ignored
+
     def ignored
       @ignored ||= []
       @ignored.map(&:to_s)
@@ -130,6 +138,7 @@ module Apipie
     # If you want to keep the documentation (prevent from overriding), remove
     # the line above the docs.
     attr_writer :generated_doc_disclaimer
+
     def generated_doc_disclaimer
       @generated_doc_disclaimer ||= "# DOC GENERATED AUTOMATICALLY: REMOVE THIS LINE TO PREVENT REGENERATING NEXT TIME"
     end
@@ -181,12 +190,12 @@ module Apipie
       @namespaced_resources = false
       @doc_path = "doc"
       @process_params = false
-      @checksum_path = [@doc_base_url, '/api/']
+      @checksum_path = [@doc_base_url, "/api/"]
       @update_checksum = false
       @link_extension = ".html"
       @record = false
       @languages = []
-      @default_locale = 'en'
+      @default_locale = "en"
       @locale = lambda { |locale| @default_locale }
       @translate = lambda { |str, locale| str }
       @persist_show_in_doc = false
