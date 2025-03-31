@@ -23,24 +23,26 @@ class Apipie::Generator::Swagger::MethodDescription::ResponseService
   def errors
     @errors ||= @method_description.errors.each_with_object({}) do |error, errors|
       errors[error.code] = {
-        description: Apipie.app.translate(error.description, @language)
+        description: Apipie.app.translate(error.description, @language),
       }
     end
   end
 
-  # @return [Hash]
   def responses
     @responses ||=
       @method_description.returns.each_with_object({}) do |response, responses_schema|
+        response_example = response.instance_variable_get(:@example)
+
         responses_schema[response.code] = {
           description: Apipie.app.translate(response.description, @language),
           schema: Apipie::Generator::Swagger::MethodDescription::ResponseSchemaService.new(
             response,
             allow_null: false,
             http_method: @http_method,
-            controller_method: @method_description
+            controller_method: @method_description,
           ).to_swagger,
-          headers: response_headers(response.headers)
+          headers: response_headers(response.headers),
+          examples: response_example.present? ? response_example : nil, # Evira: allows adding example to responses
         }.compact
       end
   end
@@ -54,7 +56,7 @@ class Apipie::Generator::Swagger::MethodDescription::ResponseService
       @method_description.ruby_name
     ).warn_through_writer
 
-    { 200 => { description: 'ok' } }
+    { 200 => { description: "ok" } }
   end
 
   # @param [Array<Hash>] headers
@@ -64,7 +66,7 @@ class Apipie::Generator::Swagger::MethodDescription::ResponseService
     headers.each_with_object({}) do |header, result|
       result[header[:name].to_s] = {
         description: header[:description],
-        type: header[:validator]
+        type: header[:validator],
       }
     end
   end
