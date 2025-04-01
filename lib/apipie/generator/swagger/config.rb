@@ -1,4 +1,4 @@
-require 'singleton'
+require "singleton"
 
 module Apipie
   module Generator
@@ -22,7 +22,9 @@ module Apipie
                 config.#{old_setter_method}#{value} is deprecated.
                 config.generator.swagger.#{attribute} instead.
               HEREDOC
-            )
+
+            
+)
 
             send(:"#{attribute}=", value)
           end
@@ -34,7 +36,9 @@ module Apipie
                 config.#{old_setter_method} is deprecated.
                 Use config.generator.swagger.#{attribute} instead.
               HEREDOC
-            )
+
+            
+)
 
             send(attribute)
           end
@@ -55,7 +59,7 @@ module Apipie
           @json_input_uses_refs = false
           @include_warning_tags = false
           @suppress_warnings = false # [105,100,102]
-          @api_host = 'localhost:3000'
+          @api_host = Apipie.configuration.swagger_host || "localhost:3000"
           @generate_x_computed_id_field = false
           @allow_additional_properties_in_response = false
           @responses_use_refs = true
@@ -70,7 +74,7 @@ module Apipie
             [
               :"swagger_#{attribute}=",
               :"swagger_#{attribute}?",
-              :"swagger_#{attribute}"
+              :"swagger_#{attribute}",
             ]
           end.flatten
         end
