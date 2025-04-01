@@ -41,7 +41,7 @@ class Apipie::Generator::Swagger::MethodDescription::ApiSchemaService
   def build_code_samples(api)
     return [] unless %w[get post put patch delete].include?(api.http_method.downcase)
 
-    host = Apipie.configuration.swagger_host || "http://localhost:3000"
+    host = Apipie.configuration.swagger_host.present? ? "https://#{Apipie.configuration.swagger_host}" : "http://localhost:3000"
     url = "#{host}#{api.path}"
 
     http_method = api.http_method.upcase
