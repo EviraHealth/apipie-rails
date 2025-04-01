@@ -69,7 +69,7 @@ class Apipie::Generator::Swagger::MethodDescription::ApiSchemaService
 
     # Join cURL parts
     curl_parts = [
-      "curl -X #{http_method} \"#{full_path}\"",
+      "curl -X #{http_method} \"#{url}\"",
       *headers,
       body_part,
     ].reject(&:empty?).join(" \\\n  ")
