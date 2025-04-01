@@ -59,11 +59,9 @@ module Apipie
   end
 
   def self.api_base_url(version = nil)
-    def self.api_base_url(version = nil)
-      self.configuration.api_base_url[version] ||
-        self.configuration.api_base_url[Apipie.configuration.default_version] ||
-        ""
-    end
+    self.configuration.api_base_url[version] ||
+      self.configuration.api_base_url[Apipie.configuration.default_version] ||
+      ""
   end
 
   def self.app_info_version_valid?(version)
