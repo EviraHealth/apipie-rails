@@ -5,12 +5,12 @@ class Apipie::Generator::Swagger::Schema
     @language = language
     @clear_warnings = clear_warnings
     @swagger = {
-      swagger: '2.0',
+      swagger: "2.0",
       info: {
         title: Apipie.configuration.app_name.to_s,
         description: "#{Apipie.app_info(version, @language)}#{Apipie.configuration.copyright}",
         version: version.to_s,
-        'x-copyright': Apipie.configuration.copyright
+        'x-copyright': Apipie.configuration.copyright,
       },
       basePath: Apipie.api_base_url(version),
       consumes: [],
@@ -19,7 +19,7 @@ class Apipie::Generator::Swagger::Schema
       schemes: Apipie.configuration.generator.swagger.schemes,
       tags: [],
       securityDefinitions: Apipie.configuration.generator.swagger.security_definitions,
-      security: Apipie.configuration.generator.swagger.global_security
+      security: Apipie.configuration.generator.swagger.global_security,
     }
   end
 
@@ -29,11 +29,13 @@ class Apipie::Generator::Swagger::Schema
     end
 
     if Apipie.configuration.generator.swagger.content_type_input == :json
-      @swagger[:consumes] = ['application/json']
-      @swagger[:info][:title] += ' (params in:body)'
+      @swagger[:consumes] = ["application/json"]
+      # Evira: removed this weird title suffix
+      # @swagger[:info][:title] += ' (params in:body)'
     else
-      @swagger[:consumes] = ['application/x-www-form-urlencoded', 'multipart/form-data']
-      @swagger[:info][:title] += ' (params in:formData)'
+      @swagger[:consumes] = ["application/x-www-form-urlencoded", "multipart/form-data"]
+      # Evira: removed this weird title suffix
+      # @swagger[:info][:title] += ' (params in:formData)'
     end
 
     if @clear_warnings
@@ -43,7 +45,7 @@ class Apipie::Generator::Swagger::Schema
     @swagger.merge!(tags_and_paths)
 
     if Apipie.configuration.generator.swagger.generate_x_computed_id_field?
-      @swagger[:info]['x-computed-id'] =
+      @swagger[:info]["x-computed-id"] =
         Apipie::Generator::Swagger::ComputedInterfaceId.instance.id
     end
 
