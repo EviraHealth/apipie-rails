@@ -42,32 +42,46 @@ class Apipie::Generator::Swagger::MethodDescription::ApiSchemaService
     return [] unless %w[get post put patch delete].include?(api.http_method.downcase)
 
     host = Apipie.configuration.swagger_host.present? ? "https://#{Apipie.configuration.swagger_host}" : "http://localhost:3000"
-    url = "#{host}#{api.path}"
-
     http_method = api.http_method.upcase
 
-    headers = []
+    # Separate query and body params
+    query_params = []
+    body_params = {}
 
+    @method_description.params.values.each do |param|
+      next if param.response_only
+
+      name = param.name.to_s
+      example = param.options[:example] || "#{name}_example"
+
+      if param.options[:in] == "query" || http_method == "GET"
+        query_params << "#{name}=#{CGI.escape(example.to_s)}"
+      else
+        body_params[name] = example
+      end
+    end
+
+    # Construct full URL with query string if needed
+    query_string = query_params.any? ? "?#{query_params.join("&")}" : ""
+    url = "#{host}#{api.path}#{query_string}"
+
+    # Headers
+    headers = []
     if @method_description.headers.present?
       @method_description.headers.each do |header|
         headers << "-H \"#{header[:name]}: #{header[:options][:default] || "<value>"}\""
       end
     else
-      headers << "-H \"Content-Type: application/json\""
+      headers << "-H \"Content-Type: application/json\"" if http_method != "GET"
     end
 
-    body_params = @method_description.params.values.each_with_object({}) do |param, hash|
-      next if param.response_only || param.options[:in] == "query"
-
-      name = param.name.to_s
-      example = param.options[:example] || "#{name}_example"
-
-      hash[name] = example
+    # Data (only for non-GET)
+    body_part = ""
+    if http_method != "GET" && body_params.any?
+      body_part = "-d '#{JSON.pretty_generate(body_params)}'"
     end
 
-    body_part = body_params.empty? ? "" : "-d '#{JSON.pretty_generate(body_params)}'"
-
-    # Join cURL parts
+    # Combine
     curl_parts = [
       "curl -X #{http_method} \"#{url}\"",
       *headers,
