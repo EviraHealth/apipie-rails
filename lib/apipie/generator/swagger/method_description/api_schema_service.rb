@@ -71,9 +71,9 @@ class Apipie::Generator::Swagger::MethodDescription::ApiSchemaService
       @method_description.headers.each do |header|
         headers << "-H \"#{header[:name]}: #{header[:options][:default] || "<value>"}\""
       end
-    else
-      headers << "-H \"Content-Type: application/json\"" if http_method != "GET"
     end
+
+    headers << "-H \"Content-Type: application/json\"" if http_method != "GET"
 
     # Data (only for non-GET)
     body_part = ""
